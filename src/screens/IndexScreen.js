@@ -1,32 +1,56 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Button } from 'react-native';
 import { Context } from '../context/BlogContext'; 
 import { Feather } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
-const IndexScreen = () => {
-    const { state, addBlogPost, deleteBlogPost } = useContext(Context);
+const IndexScreen = ({ navigation }) => {
+    const { state, deleteBlogPost, getBlogPosts } = useContext(Context);
+
+    useEffect (() => {
+        getBlogPosts();
+
+        const listener = navigation.addListener('didFocus', () => {
+            getBlogPosts();
+        });
+        
+        return () => {
+            listener.remove();
+        };
+    }, []);
 
     return (
         <View>
-            <Button 
-                title='Add Post'
-                onPress={addBlogPost}
-            />
             <FlatList 
                 data={state} 
                 keyExtractor={blogPost => blogPost.title}
                 renderItem={({ item }) => {
-                    return <View style={styles.row}>
-                        <Text style={styles.title}>{item.title} - {item.id}</Text>
-                        <TouchableOpacity onPress={() => deleteBlogPost(id)}>
-                            <Feather style={styles.icon} name='trash' />
+                    return (
+                        <TouchableOpacity onPress={() => navigation.navigate('Show', { id: item.id })}>
+                            <View style={styles.row}>
+                                <Text style={styles.title}>{
+                                    item.title} - {item.id}
+                                </Text>
+                                <TouchableOpacity onPress={() => deleteBlogPost(item.id)}>
+                                    <Feather style={styles.icon} name='trash' />
+                                </TouchableOpacity>
+                            </View>
                         </TouchableOpacity>
-                    </View>
+                    );
                 }}
             />
         </View>
     );
+};
+
+IndexScreen.navigationOptions = ({ navigation }) => {
+    return {
+        headerRight: (
+            <TouchableOpacity onPress={() => navigation.navigate('Create')} >
+                <Feather name='plus' size={30} />
+            </TouchableOpacity>
+        )
+    };
 };
 
 const styles = StyleSheet.create({
